@@ -7,8 +7,14 @@
     <Project Path="../PBEsfio/CadastroClientes.Infrastructure/CadastroClientes.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/src/CartaoCredito/" />
-  <Folder Name="/src/PropostaCredito/" />
+  <Folder Name="/src/PropostaCredito/">
+    <Project Path="PropostaCredito.Application/PropostaCredito.Application.csproj" />
+    <Project Path="PropostaCredito.Domain/PropostaCredito.Domain.csproj" />
+    <Project Path="PropostaCredito.Infrastructure/PropostaCredito.Infrastructure.csproj" />
+    <Project Path="PropostaCredito.Worker/PropostaCredito.Worker.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="../PBEsfio/CadastroClientes.Tests/CadastroClientes.Tests.csproj" />
+    <Project Path="PropostaCredito.Tests/PropostaCredito.Tests.csproj" />
   </Folder>
 </Solution>
