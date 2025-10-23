@@ -1,1 +1,14 @@
-<Solution />
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/CadastroClientes/">
+    <Project Path="../PBEsfio/CadastroClientes.Api/CadastroClientes.Api.csproj" />
+    <Project Path="../PBEsfio/CadastroClientes.Application/CadastroClientes.Application.csproj" />
+    <Project Path="../PBEsfio/CadastroClientes.Domain/CadastroClientes.Domain.csproj" />
+    <Project Path="../PBEsfio/CadastroClientes.Infrastructure/CadastroClientes.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/CartaoCredito/" />
+  <Folder Name="/src/PropostaCredito/" />
+  <Folder Name="/tests/">
+    <Project Path="../PBEsfio/CadastroClientes.Tests/CadastroClientes.Tests.csproj" />
+  </Folder>
+</Solution>
