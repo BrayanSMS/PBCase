@@ -4,10 +4,10 @@
   </Folder>
   <Folder Name="/src/" />
   <Folder Name="/src/CadastroClientes/">
-    <Project Path="../PBEsfio/CadastroClientes.Api/CadastroClientes.Api.csproj" />
-    <Project Path="../PBEsfio/CadastroClientes.Application/CadastroClientes.Application.csproj" />
-    <Project Path="../PBEsfio/CadastroClientes.Domain/CadastroClientes.Domain.csproj" />
-    <Project Path="../PBEsfio/CadastroClientes.Infrastructure/CadastroClientes.Infrastructure.csproj" />
+    <Project Path="CadastroClientes.Api/CadastroClientes.Api.csproj" />
+    <Project Path="CadastroClientes.Application/CadastroClientes.Application.csproj" />
+    <Project Path="CadastroClientes.Domain/CadastroClientes.Domain.csproj" />
+    <Project Path="CadastroClientes.Infrastructure/CadastroClientes.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/src/CartaoCredito/">
     <Project Path="CartaoCredito.Application/CartaoCredito.Application.csproj" />
@@ -22,7 +22,7 @@
     <Project Path="PropostaCredito.Worker/PropostaCredito.Worker.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="../PBEsfio/CadastroClientes.Tests/CadastroClientes.Tests.csproj" />
+    <Project Path="CadastroClientes.Tests/CadastroClientes.Tests.csproj" />
     <Project Path="CartaoCredito.Tests/CartaoCredito.Tests.csproj" />
     <Project Path="PropostaCredito.Tests/PropostaCredito.Tests.csproj" />
   </Folder>

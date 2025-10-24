@@ -1,8 +1,8 @@
 using CadastroClientes.Infrastructure; 
 
 var builder = WebApplication.CreateBuilder(args);
-
 builder.Services.AddControllers();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -25,7 +25,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "CadastroClientes.Api V1");
-        c.RoutePrefix = string.Empty; // Acessar o Swagger na raiz (/)
+        c.RoutePrefix = string.Empty;
     });
 }
 
@@ -45,14 +45,15 @@ try
             "Conexão com RabbitMQ estabelecida com sucesso em: {Host}",
             rabbitMqConnection.Endpoint.HostName);
     }
-    else    
-        logger.LogWarning("Conexão com RabbitMQ não está aberta.");    
+    else
+    {
+        logger.LogWarning("Conexão com RabbitMQ não está aberta.");
+    }
 }
 catch (Exception ex)
 {
     var logger = app.Services.GetRequiredService<ILogger<Program>>();
     logger.LogCritical(ex, "Falha fatal ao conectar com RabbitMQ na inicialização.");
-
     throw;
 }
 

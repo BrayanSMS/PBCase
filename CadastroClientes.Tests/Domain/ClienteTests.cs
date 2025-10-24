@@ -1,13 +1,16 @@
 ﻿using CadastroClientes.Domain.Entities;
-using FluentAssertions;
+using FluentAssertions; // Para asserções mais legíveis
 
 namespace CadastroClientes.Tests.Domain
 {
     public class ClienteTests
     {
+        // --- Testes para o Método de Fábrica 'Create' ---
+
         [Fact] // Indica que é um método de teste
         public void Create_ComDadosValidos_DeveCriarClienteComStatusEmAnalise()
         {
+            // Arrange (Organização)
             string nomeValido = "Brayan S.";
             string cpfValido = "123.456.789-00";
             string emailValido = "teste@teste.com";
@@ -30,7 +33,8 @@ namespace CadastroClientes.Tests.Domain
         [InlineData("")]
         [InlineData("   ")]
         public void Create_ComNomeInvalido_DeveLancarArgumentException(string nomeInvalido)
-        {            
+        {
+            // Arrange
             string cpfValido = "123.456.789-00";
             string emailValido = "teste@teste.com";
 
@@ -40,7 +44,7 @@ namespace CadastroClientes.Tests.Domain
 
             // Assert
             act.Should().Throw<ArgumentException>()
-               .WithMessage("Nome não pode ser nulo ou vazio.*");
+               .WithMessage("Nome não pode ser nulo ou vazio.*"); // Mensagem esperada (usando wildcard)
         }
 
         [Theory]
@@ -86,6 +90,7 @@ namespace CadastroClientes.Tests.Domain
             }
             else
             {
+                // Se não for nulo/espaço, a entidade atual aceita.
                 var cliente = Cliente.Create(nomeValido, cpfValido, emailInvalido);
                 cliente.Should().NotBeNull();
             }

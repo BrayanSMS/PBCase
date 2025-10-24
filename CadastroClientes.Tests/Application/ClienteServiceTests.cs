@@ -19,16 +19,13 @@ namespace CadastroClientes.Tests.Application
         private readonly Mock<IMessageBusClient> _mockMessageBusClient;
         private readonly ClienteService _clienteService; // A classe que estamos testando
 
-        // Construtor: Executado antes de cada teste ([Fact] ou [Theory])
         public ClienteServiceTests()
         {
-            // Criamos os Mocks das dependências
             _mockClienteRepository = new Mock<IClienteRepository>();
             _mockMessageBusClient = new Mock<IMessageBusClient>();
 
-            // Instanciamos o serviço, injetando os Mocks
             _clienteService = new ClienteService(
-                _mockClienteRepository.Object, // Usamos .Object para obter a instância mockada
+                _mockClienteRepository.Object,
                 _mockMessageBusClient.Object
             );
         }

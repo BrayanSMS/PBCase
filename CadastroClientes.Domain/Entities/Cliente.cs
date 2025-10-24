@@ -2,7 +2,8 @@
 using System.Text;
 
 namespace CadastroClientes.Domain.Entities
-{    
+{
+    
     public class Cliente
     {        
         private Cliente(string nome, string cpf, string email)

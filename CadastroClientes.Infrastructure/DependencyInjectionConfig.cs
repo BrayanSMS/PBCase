@@ -54,7 +54,7 @@ namespace CadastroClientes.Infrastructure
 
                 return retryPolicy.Execute(() => factory.CreateConnection());
             });
-            
+
             services.AddSingleton<IMessageBusClient, RabbitMqClient>();
             services.AddScoped<IClienteService, ClienteService>();
 
