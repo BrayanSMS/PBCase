@@ -6,7 +6,12 @@
     <Project Path="../PBEsfio/CadastroClientes.Domain/CadastroClientes.Domain.csproj" />
     <Project Path="../PBEsfio/CadastroClientes.Infrastructure/CadastroClientes.Infrastructure.csproj" />
   </Folder>
-  <Folder Name="/src/CartaoCredito/" />
+  <Folder Name="/src/CartaoCredito/">
+    <Project Path="CartaoCredito.Application/CartaoCredito.Application.csproj" />
+    <Project Path="CartaoCredito.Domain/CartaoCredito.Domain.csproj" />
+    <Project Path="CartaoCredito.Infrastructure/CartaoCredito.Infrastructure.csproj" />
+    <Project Path="CartaoCredito.Worker/CartaoCredito.Worker.csproj" />
+  </Folder>
   <Folder Name="/src/PropostaCredito/">
     <Project Path="PropostaCredito.Application/PropostaCredito.Application.csproj" />
     <Project Path="PropostaCredito.Domain/PropostaCredito.Domain.csproj" />
@@ -15,6 +20,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="../PBEsfio/CadastroClientes.Tests/CadastroClientes.Tests.csproj" />
+    <Project Path="CartaoCredito.Tests/CartaoCredito.Tests.csproj" />
     <Project Path="PropostaCredito.Tests/PropostaCredito.Tests.csproj" />
   </Folder>
 </Solution>
