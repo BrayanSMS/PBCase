@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-CartaoCredito.Worker-2d8819dd-d027-4bdb-ba87-d4c4964cfd77</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageReference Include="Polly" Version="8.6.4" />
+    <PackageReference Include="RabbitMQ.Client" Version="6.8.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CartaoCredito.Application\CartaoCredito.Application.csproj" />
+    <ProjectReference Include="..\CartaoCredito.Infrastructure\CartaoCredito.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>
