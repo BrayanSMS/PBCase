@@ -103,3 +103,47 @@ Cada microsserviço segue os princípios da **Clean Architecture**, separando as r
 * **Repositórios em Memória:** Utilizados para simplificar o setup local e focar na lógica principal do desafio. Em um ambiente de produção, seriam substituídos por implementações conectadas a bancos de dados persistentes (SQL Server, PostgreSQL, etc.).
 * **Worker Services:** Template adequado para consumidores de longa duração que escutam filas de mensagens.
 
+
+## Fluxograma
+
+```mermaid
+graph TD
+    subgraph "Fluxo Principal"
+        A["Usuário/Sistema Externo"] -->|"1.POST /api/v1/clientes"| B("Microsserviço: Cadastro Clientes API");
+        B -->|"2.Salva Cliente (Status: EmAnalise)"| DB1[("DB Cadastro")];
+        B -->|"3.Publica 'cliente.criado'"| C["RabbitMQ: clientes_exchange"];
+        C -->|"routingKey='cliente.criado'"| D["Fila: proposta.analisar"];
+        E("Microsserviço: Proposta Crédito Worker") -->|"4.Consome msg"| D;
+        E -->|"5.Calcula Score & Regras"| E;
+        E -->|"6.Salva/Atualiza Proposta"| DB2[("DB Proposta")];
+        E -->|"7a. Se Aprovada"| F["RabbitMQ: clientes_exchange"];
+        E -->|"7b. Se Reprovada"| G["RabbitMQ: clientes_exchange"];
+        F -->|"routingKey='proposta.aprovada'"| H["Fila: cartao.emitir"];
+        I("Microsserviço: Cartão Crédito Worker") -->|"8.Consome msg"| H;
+        I -->|"9.Gera Cartão(ões)"| I;
+        I -->|"10.Salva Cartão(ões)"| DB3[("DB Cartão")];
+        G -->|"routingKey='proposta.reprovada'"| J["Fila: notificacao.proposta.reprovada (Exemplo)"];
+        K["Ex: Serviço Notificação"] -->|"Consome msg"| J;
+        I -->|"11.(Opcional) Publica 'cartao.emitido'"| L["RabbitMQ: clientes_exchange"];
+        L -->|"routingKey='cartao.emitido'"| M["Fila: notificacao.cartao.emitido (Exemplo)"];
+    end
+
+    subgraph "Resiliência / Tratamento de Erros"
+        D -->|"Falha no Consumo (NACK)"| DLQ1_Ex["RabbitMQ: clientes_exchange.dlx"];
+        DLQ1_Ex -->|"routingKey='cliente.criado.dlq'"| DLQ1["Fila DLQ: proposta.analisar.dlq"];
+        H -->|"Falha no Consumo (NACK)"| DLQ2_Ex["RabbitMQ: clientes_exchange.dlx"];
+        DLQ2_Ex -->|"routingKey='proposta.aprovada.dlq'"| DLQ2["Fila DLQ: cartao.emitir.dlq"];
+        DLQ1 -->|"Monitoramento/Reprocessamento"| ADM(["Admin/Monitor"]);
+        DLQ2 -->|"Monitoramento/Reprocessamento"| ADM;
+    end
+
+    classDef microservice fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef queue fill:#ccf,stroke:#333,stroke-width:1px;
+    classDef exchange fill:#ff9,stroke:#333,stroke-width:1px;
+    classDef database fill:#ccf,stroke:#333,stroke-width:1px;
+    classDef dlq fill:#fcc,stroke:#f00,stroke-width:1px;
+    class B,E,I,K microservice;
+    class C,F,G,L,DLQ1_Ex,DLQ2_Ex exchange;
+    class D,H,J,M queue;
+    class DB1,DB2,DB3 database;
+    class DLQ1,DLQ2 dlq;
