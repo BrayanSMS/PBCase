@@ -44,7 +44,7 @@ Cada microsserviço segue os princípios da **Clean Architecture**, separando as r
 1.  **Clonar o Repositório:**
     ```bash
     git clone https://github.com/BrayanSMS/PBCase.git
-    cd PBEsfio
+    cd PBCase
     ```
 2.  **Iniciar RabbitMQ via Docker:**
     ```bash
@@ -58,7 +58,7 @@ Cada microsserviço segue os princípios da **Clean Architecture**, separando as r
 
 **Via Visual Studio:**
 
-1.  Abra a solução `PBEsfio.sln`.
+1.  Abra a solução `PBCase.sln`.
 2.  Clique com o botão direito na Solução no Solution Explorer e selecione "Set Startup Projects...".
 3.  Escolha a opção "Multiple startup projects".
 4.  Defina a "Action" como "Start" para os seguintes projetos:
