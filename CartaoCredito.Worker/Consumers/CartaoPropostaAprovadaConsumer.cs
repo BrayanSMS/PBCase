@@ -29,10 +29,9 @@ namespace CartaoCredito.Worker.Consumers
         private const string ExchangeName = "clientes_exchange";
         private const string RoutingKey = "proposta.aprovada";
 
-        // Configuração DLQ
         private const string DeadLetterExchange = ExchangeName + ".dlx";
         private const string DeadLetterQueueName = QueueName + ".dlq";
-        private const string DeadLetterRoutingKey = RoutingKey + ".dlq"; 
+        private const string DeadLetterRoutingKey = RoutingKey + ".dlq";
 
         public CartaoPropostaAprovadaConsumer(
             ILogger<CartaoPropostaAprovadaConsumer> logger,
@@ -54,28 +53,23 @@ namespace CartaoCredito.Worker.Consumers
             {
                 _channel = _rabbitMqConnection.CreateModel();
 
-                // Garante que a Exchange principal exista
                 _channel.ExchangeDeclare(ExchangeName, ExchangeType.Direct, durable: true);
-
-                // Garante que a DLX exista
                 _channel.ExchangeDeclare(DeadLetterExchange, ExchangeType.Direct, durable: true);
-
-                // Declara a DLQ
                 _channel.QueueDeclare(DeadLetterQueueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
-
-                // Faz o bind da DLQ na DLX com a routing key específica
                 _channel.QueueBind(DeadLetterQueueName, DeadLetterExchange, DeadLetterRoutingKey);
 
-                // Declara a Fila principal com argumento para DLX e routing key específica
                 var arguments = new Dictionary<string, object>
                 {
                     { "x-dead-letter-exchange", DeadLetterExchange },
-                    { "x-dead-letter-routing-key", DeadLetterRoutingKey } // Direciona erros para a routing key correta na DLX
+                    { "x-dead-letter-routing-key", DeadLetterRoutingKey }
                 };
-                _channel.QueueDeclare(QueueName, durable: true, exclusive: false, autoDelete: false, arguments: arguments);
-                _channel.QueueBind(QueueName, ExchangeName, RoutingKey);
+                _channel.QueueDeclare(queue: QueueName,
+                                      durable: true,
+                                      exclusive: false,
+                                      autoDelete: false,
+                                      arguments: arguments);
 
-                // QoS
+                _channel.QueueBind(QueueName, ExchangeName, RoutingKey);
                 _channel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
 
                 _logger.LogInformation("Worker conectado ao RabbitMQ. Exchange '{Exchange}', Fila '{Queue}', DLQ '{DlqQueue}' declaradas e vinculadas.",
@@ -95,15 +89,15 @@ namespace CartaoCredito.Worker.Consumers
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            if (_channel == null)
+            if (_channel == null || _channel.IsClosed)
             {
-                _logger.LogError("Canal RabbitMQ não inicializado. O Worker não pode iniciar.");
+                _logger.LogError("Canal RabbitMQ não inicializado ou fechado. O Worker não pode iniciar.");
                 return;
             }
 
             stoppingToken.Register(() => _logger.LogInformation("Worker Gracefully stopping..."));
 
-            var consumer = new EventingBasicConsumer(_channel);
+            var consumer = new AsyncEventingBasicConsumer(_channel);
 
             consumer.Received += async (sender, eventArgs) =>
             {
@@ -122,7 +116,7 @@ namespace CartaoCredito.Worker.Consumers
                         throw new JsonException($"Falha ao desserializar PropostaAprovadaMessage ou IDs inválidos. Conteúdo: {messageString}");
                     }
 
-                    using (var scope = _scopeFactory.CreateScope())
+                    await using (var scope = _scopeFactory.CreateAsyncScope())
                     {
                         var cartaoService = scope.ServiceProvider.GetRequiredService<ICartaoService>();
                         await cartaoService.ProcessarEmissaoCartaoAsync(message);
@@ -133,29 +127,57 @@ namespace CartaoCredito.Worker.Consumers
                         _channel.BasicAck(eventArgs.DeliveryTag, false);
                         _logger.LogInformation("Mensagem processada com sucesso (ACK). PropostaId: {PropostaId}", message?.PropostaId);
                     }
-                    else                    
-                        _logger.LogWarning("Canal RabbitMQ fechado antes do ACK para PropostaId: {PropostaId}.", message?.PropostaId);                    
+                    else
+                    {
+                        _logger.LogWarning("Canal RabbitMQ fechado antes do ACK para PropostaId: {PropostaId}.", message?.PropostaId);
+                    }
                 }
                 catch (JsonException jsonEx)
                 {
                     _logger.LogError(jsonEx, "Erro ao desserializar mensagem PropostaAprovada. Enviando para DLQ. Conteúdo: {MessageString}", messageString);
                     if (_channel?.IsOpen ?? false) _channel.BasicNack(eventArgs.DeliveryTag, false, false);
                 }
-                // Captura exceções lançadas pelo CartaoService (ArgumentException, erro de BD, etc.)
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Erro ao processar mensagem PropostaAprovada. Enviando para DLQ. PropostaId: {PropostaId}", message?.PropostaId);
+                    _logger.LogError(ex, "Erro INESPERADO ao processar mensagem PropostaAprovada. Enviando para DLQ. PropostaId: {PropostaId}", message?.PropostaId);
                     if (_channel?.IsOpen ?? false) _channel.BasicNack(eventArgs.DeliveryTag, false, false);
                 }
             };
 
-            _channel.BasicConsume(QueueName, false, consumer);
+            try
+            {
+                _channel.BasicConsume(
+                    queue: QueueName,
+                    autoAck: false,
+                    consumerTag: "",
+                    noLocal: false,
+                    exclusive: false,
+                    arguments: null,
+                    consumer: consumer);
 
-            _logger.LogInformation("Worker iniciado. Aguardando mensagens na fila '{QueueName}'...", QueueName);
+                _logger.LogInformation("Worker iniciado. Aguardando mensagens na fila '{QueueName}'...", QueueName);
+
+            }
+            catch (OperationInterruptedException opEx)
+            {
+                _logger.LogCritical(opEx, "ERRO AO INICIAR CONSUMO (BasicConsume) para fila {QueueName}. Verifique estado/configuração da fila no RabbitMQ.", QueueName);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical(ex, "Erro inesperado ao tentar iniciar consumo (BasicConsume) para fila {QueueName}.", QueueName);
+                throw;
+            }
+
 
             while (!stoppingToken.IsCancellationRequested)
             {
                 await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+                if (_channel == null || _channel.IsClosed)
+                {
+                    _logger.LogError("Canal RabbitMQ fechado inesperadamente durante execução. O Worker será interrompido.");
+                    break;
+                }
             }
 
             _logger.LogInformation("Worker está parando.");
