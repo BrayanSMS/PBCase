@@ -36,14 +36,14 @@ namespace PropostaCredito.Domain.Entities
         /// Método de Fábrica para criar uma proposta inicial.
         /// </summary>
         public static Proposta Create(Guid clienteId, string nomeCliente, string cpfCliente, string emailCliente)
-        {            
+        {
             if (clienteId == Guid.Empty)
                 throw new ArgumentException("Id do cliente inválido.", nameof(clienteId));
             if (string.IsNullOrWhiteSpace(nomeCliente))
                 throw new ArgumentException("Nome do cliente inválido.", nameof(nomeCliente));
             if (string.IsNullOrWhiteSpace(cpfCliente) || cpfCliente.Length != 11 || !cpfCliente.All(char.IsDigit))
-                throw new ArgumentException("CPF do cliente inválido.", nameof(cpfCliente));
-            if (string.IsNullOrWhiteSpace(emailCliente)) // Simples verificação de e-mail não vazio
+                throw new ArgumentException("CPF do cliente inválido (deve ser apenas números, 11 dígitos).", nameof(cpfCliente));
+            if (string.IsNullOrWhiteSpace(emailCliente))
                 throw new ArgumentException("Email do cliente inválido.", nameof(emailCliente));
 
             return new Proposta(clienteId, nomeCliente, cpfCliente, emailCliente);
@@ -54,33 +54,35 @@ namespace PropostaCredito.Domain.Entities
         /// </summary>
         public void AnalisarCredito()
         {
-            if (Status != PropostaStatus.Pendente)                            
+            if (Status != PropostaStatus.Pendente)
+            {
                 return;
+            }
 
-            // Simulação da lógica de Score (em um cenário real, chamaria um serviço externo)
-            // Irá gerar um score aleatório baseado no último dígito do CPF
+            // Simulação da lógica de Score
             var ultimoDigitoCpf = int.Parse(CpfCliente.Substring(CpfCliente.Length - 1));
-            // Mapeia o dígito para faixas de score
+
             Score = ultimoDigitoCpf switch
             {
-                0 => Random.Shared.Next(0, 50),       // Tendência a Reprovar
-                1 => Random.Shared.Next(50, 101),     // Tendência a Reprovar
-                2 => Random.Shared.Next(101, 250),    // Tendência a Limite Baixo
-                3 => Random.Shared.Next(200, 350),    // Tendência a Limite Baixo
-                4 => Random.Shared.Next(300, 501),    // Tendência a Limite Baixo
-                5 => Random.Shared.Next(450, 600),    // Tendência a Limite Alto
-                6 => Random.Shared.Next(501, 700),    // Tendência a Limite Alto
-                7 => Random.Shared.Next(650, 800),    // Tendência a Limite Alto
-                8 => Random.Shared.Next(750, 900),    // Tendência a Limite Alto
-                _ => Random.Shared.Next(850, 1001)    // Tendência a Limite Alto (dígito 9)
-            }; 
+                0 => Random.Shared.Next(0, 101),   // 0 a 100 (Reprovado)
+                1 => Random.Shared.Next(0, 101),   // 0 a 100 (Reprovado)
+                2 => Random.Shared.Next(101, 501), // 101 a 500 (Aprovado 1 cartão)
+                3 => Random.Shared.Next(101, 501), // 101 a 500 (Aprovado 1 cartão)
+                4 => Random.Shared.Next(101, 501), // 101 a 500 (Aprovado 1 cartão)
+                5 => Random.Shared.Next(501, 1001), // 501 a 1000 (Aprovado 2 cartões)
+                6 => Random.Shared.Next(501, 1001), // 501 a 1000 (Aprovado 2 cartões)
+                7 => Random.Shared.Next(501, 1001), // 501 a 1000 (Aprovado 2 cartões)
+                8 => Random.Shared.Next(501, 1001), // 501 a 1000 (Aprovado 2 cartões)
+                _ => Random.Shared.Next(501, 1001)  // Final 9 -> 501 a 1000 (Aprovado 2 cartões)
+            };
 
-            if (Score <= 100)            
-                Reprovar("Score de crédito insuficiente.");            
-            else if (Score <= 500)            
-                Aprovar(1000.00m, 1);            
-            else            
-                Aprovar(5000.00m, 2);            
+            if (Score <= 100)
+                Reprovar("Score de crédito insuficiente.");
+            else if (Score <= 500)
+                Aprovar(1000.00m, 1);
+            else
+                Aprovar(5000.00m, 2);
+
         }
 
         private void Aprovar(decimal limite, int cartoes)
