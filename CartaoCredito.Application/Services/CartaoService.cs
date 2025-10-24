@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Globalization;
 
 namespace CartaoCredito.Application.Services
 {
@@ -24,8 +25,12 @@ namespace CartaoCredito.Application.Services
 
         public async Task ProcessarEmissaoCartaoAsync(PropostaAprovadaMessage message)
         {
-            _logger.LogInformation("Recebida mensagem para emitir cartão(ões) para Proposta ID: {PropostaId}, Cliente ID: {ClienteId}",
-               message.PropostaId, message.ClienteId);
+            _logger.LogInformation(
+                "Recebida mensagem para emitir {CartoesPermitidos} cartão(ões) com limite {Limite:C} para Proposta ID: {PropostaId}, Cliente ID: {ClienteId}",
+                message.CartoesPermitidos,
+                message.LimiteAprovado,
+                message.PropostaId,
+                message.ClienteId);
 
             if (message.ClienteId == Guid.Empty || message.PropostaId == Guid.Empty || message.LimiteAprovado <= 0 || message.CartoesPermitidos <= 0)
             {
@@ -40,8 +45,13 @@ namespace CartaoCredito.Application.Services
                 {
                     var novoCartao = Cartao.Create(message.ClienteId, message.PropostaId, message.LimiteAprovado);
                     cartoesParaSalvar.Add(novoCartao);
-                    _logger.LogInformation("Cartão {NumeroCartao} (Parcial) gerado para Cliente {ClienteId}",
-                       novoCartao.NumeroCartao.Substring(novoCartao.NumeroCartao.Length - 4), novoCartao.ClienteId);
+
+                    _logger.LogInformation(
+                        "Cartão {NumeroCartao} (Parcial) com limite {Limite:C} gerado para Cliente {ClienteId} (Proposta {PropostaId})",
+                       novoCartao.NumeroCartao.Substring(novoCartao.NumeroCartao.Length - 4),
+                       novoCartao.Limite,
+                       novoCartao.ClienteId,
+                       novoCartao.PropostaId);
                 }
             }
             catch (ArgumentException ex)
@@ -78,7 +88,7 @@ namespace CartaoCredito.Application.Services
             else
             {
                 _logger.LogWarning("Nenhum cartão foi gerado para Proposta {PropostaId}, embora a mensagem fosse válida.", message.PropostaId);
-            }
+            }            
         }
     }
 }
