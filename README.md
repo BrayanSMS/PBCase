@@ -94,6 +94,43 @@ Cada microsserviço segue os princípios da **Clean Architecture**, separando as r
 4.  Observe os logs dos workers `PropostaCredito.Worker` e `CartaoCredito.Worker` para acompanhar o processamento das mensagens.
 5.  Verifique a interface do RabbitMQ (`http://localhost:15672`) para ver as filas (`proposta.analisar`, `cartao.emitir`, e as DLQs correspondentes) sendo criadas e as mensagens fluindo.
 
+#### Cenários de Teste (Exemplos)
+
+Use os seguintes corpos de requisição no endpoint `POST /api/v1/clientes` do Swagger:
+
+* **Cenário Reprovado (Score 0-100):** CPF terminando em `0` ou `1`.
+    ```json
+    {
+      "nome": "Cliente Teste Reprovado",
+      "cpf": "123.456.789-01",
+      "email": "reprovado@teste.com"
+    }
+    ```
+    * **Resultado Esperado:** Proposta com status `Reprovada`. Nenhuma mensagem enviada para `cartao.emitir`.
+
+* **Cenário Aprovado 1 Cartão (Score 101-500):** CPF terminando em `2`, `3` ou `4`.
+    ```json
+    {
+      "nome": "Cliente Teste Um Cartao",
+      "cpf": "123.456.789-03",
+      "email": "um.cartao@teste.com"
+    }
+    ```
+    * **Resultado Esperado:** Proposta com status `Aprovada`, Limite `1000.00`, Cartões Permitidos `1`. Mensagem enviada para `cartao.emitir`. O `CartaoCredito.Worker` deve gerar e salvar **1 cartão** com limite 1000.
+
+* **Cenário Aprovado 2 Cartões (Score 501-1000):** CPF terminando em `5`, `6`, `7`, `8` ou `9`.
+    ```json
+    {
+      "nome": "Cliente Teste Dois Cartoes",
+      "cpf": "123.456.789-08",
+      "email": "dois.cartoes@teste.com"
+    }
+    ```
+    * **Resultado Esperado:** Proposta com status `Aprovada`, Limite `5000.00`, Cartões Permitidos `2`. Mensagem enviada para `cartao.emitir`. O `CartaoCredito.Worker` deve gerar e salvar **2 cartões**, cada um com limite 5000.
+
+* **Cenário CPF Duplicado:** Envie a mesma requisição (mesmo CPF) duas vezes.
+    * **Resultado Esperado:** A primeira requisição deve retornar `201 Created`. A segunda deve retornar `400 Bad Request` com a mensagem "CPF já cadastrado no sistema.".
+
 ## Decisões de Design
 
 * **Clean Architecture:** Escolhida para promover baixo acoplamento, alta coesão e testabilidade, separando claramente as responsabilidades.
